@@ -48,12 +48,24 @@ class ClientHandler extends Thread {
                     continue;
                 }
 
+                if (message.equalsIgnoreCase("!info")) {
+                    sendInformation();
+                    continue;
+                }
+
                 if (containsBannedWords(message)) {
                     writer.println("Your message contains banned words and was not sent.");
                     continue;
                 }
 
-                Main.broadcastMessage(clientName + ": " + message, this);
+                // Handle specific commands
+                if (message.startsWith("@")) {
+                    handlePrivateMessage(message);
+                } else if (message.startsWith("!exclude")) {
+                    handleExclusionMessage(message);
+                } else {
+                    Main.broadcastMessage(clientName + ": " + message, this);
+                }
             }
 
         } catch (IOException ex) {
@@ -67,6 +79,46 @@ class ClientHandler extends Thread {
             }
         }
     }
+
+    private void sendInformation() {
+        String clientList = String.join(", ", Main.getConnectedClients());
+        String instructions = "Send a message to all: <message>\n" +
+                "Send a private message to a specific client: @username: <message>\n" +
+                "Send to multiple clients: @username1,username2: <message>\n" +
+                "Exclude certain clients from a message: !exclude username1,username2: <message>\n" +
+                "Query banned words: !banned";
+
+        writer.println("Connected clients: " + clientList);
+        writer.println("Usage instructions:\n" + instructions);
+    }
+
+
+    // Handle private messages
+    private void handlePrivateMessage(String message) {
+        String[] parts = message.split(":", 2);
+        if (parts.length == 2) {
+            String recipients = parts[0].substring(1).trim(); // Extract usernames
+            String actualMessage = parts[1].trim();
+            List<String> recipientNames = Arrays.asList(recipients.split(","));
+            Main.sendMessageToClients(clientName + " (private): " + actualMessage, recipientNames, this);
+        } else {
+            writer.println("Invalid format. Use @username: message or @username1,username2: message");
+        }
+    }
+
+    // Handle exclusion messages
+    private void handleExclusionMessage(String message) {
+        String[] parts = message.split(":", 2);
+        if (parts.length == 2) {
+            String excluded = parts[0].substring(8).trim(); // Extract excluded usernames
+            String actualMessage = parts[1].trim();
+            List<String> excludedNames = Arrays.asList(excluded.split(","));
+            Main.broadcastMessageExcluding(clientName + ": " + actualMessage, excludedNames, this);
+        } else {
+            writer.println("Invalid format. Use !exclude username1,username2: message");
+        }
+    }
+
 
     private boolean containsBannedWords(String message) {
         for (String bannedWord : Main.getBannedWords()) {
