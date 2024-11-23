@@ -26,15 +26,10 @@ class ClientHandler extends Thread {
             clientName = reader.readLine();
 
             if (clientName == null || clientName.trim().isEmpty()) {
-                System.out.println("Client failed to provide a valid name. Disconnecting.");
                 socket.close();
                 return;
             }
-
-            System.out.println(clientName + " has joined");
             Main.broadcastMessage(clientName + " has joined the chat", this);
-
-            // Handle client messages
             while (true) {
                 String message = reader.readLine();
                 if (message == null || message.equalsIgnoreCase("bye")) {
@@ -58,7 +53,6 @@ class ClientHandler extends Thread {
                     continue;
                 }
 
-                // Handle specific commands
                 if (message.startsWith("@")) {
                     handlePrivateMessage(message);
                 } else if (message.startsWith("!exclude")) {
@@ -92,8 +86,6 @@ class ClientHandler extends Thread {
         writer.println("Usage instructions:\n" + instructions);
     }
 
-
-    // Handle private messages
     private void handlePrivateMessage(String message) {
         String[] parts = message.split(":", 2);
         if (parts.length == 2) {
@@ -106,7 +98,6 @@ class ClientHandler extends Thread {
         }
     }
 
-    // Handle exclusion messages
     private void handleExclusionMessage(String message) {
         String[] parts = message.split(":", 2);
         if (parts.length == 2) {
@@ -118,7 +109,6 @@ class ClientHandler extends Thread {
             writer.println("Invalid format. Use !exclude username1,username2: message");
         }
     }
-
 
     private boolean containsBannedWords(String message) {
         for (String bannedWord : Main.getBannedWords()) {
@@ -137,4 +127,3 @@ class ClientHandler extends Thread {
         return clientName;
     }
 }
-
